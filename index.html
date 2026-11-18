@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#121212" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100dvh;
+      overflow: hidden;
+    }
+    .calculator {
+      width: 100%;
+      max-width: 420px;
+      height: 100dvh;
+      max-height: 820px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px 28px;
+      background: #121212;
+    }
+    .display-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding: 16px;
+      word-break: break-all;
+    }
+    .previous {
+      font-size: 1.25rem;
+      color: #888888;
+      min-height: 1.6rem;
+      margin-bottom: 6px;
+    }
+    .current {
+      font-size: 3.5rem;
+      font-weight: 400;
+      line-height: 1.1;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      height: 62%;
+    }
+    button {
+      border: none;
+      border-radius: 20px;
+      font-size: 1.6rem;
+      font-weight: 500;
+      color: #ffffff;
+      background-color: #242424;
+      cursor: pointer;
+      transition: transform 0.08s ease, background-color 0.15s ease;
+    }
+    button:active {
+      transform: scale(0.95);
+      background-color: #363636;
+    }
+    .btn-func {
+      background-color: #333333;
+      color: #ff9f0a;
+    }
+    .btn-op {
+      background-color: #ff9f0a;
+      color: #ffffff;
+      font-size: 1.8rem;
+    }
+    .btn-op:active {
+      background-color: #ffb84d;
+    }
+    .btn-zero {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display-container">
+      <div class="previous" id="previous"></div>
+      <div class="current" id="current">0</div>
+    </div>
+    <div class="buttons">
+      <button class="btn-func" onclick="clearAll()">C</button>
+      <button class="btn-func" onclick="deleteLast()">⌫</button>
+      <button class="btn-func" onclick="appendPercent()">%</button>
+      <button class="btn-op" onclick="chooseOperation('/')">÷</button>
+
+      <button onclick="appendNumber('7')">7</button>
+      <button onclick="appendNumber('8')">8</button>
+      <button onclick="appendNumber('9')">9</button>
+      <button class="btn-op" onclick="chooseOperation('*')">×</button>
+
+      <button onclick="appendNumber('4')">4</button>
+      <button onclick="appendNumber('5')">5</button>
+      <button onclick="appendNumber('6')">6</button>
+      <button class="btn-op" onclick="chooseOperation('-')">−</button>
+
+      <button onclick="appendNumber('1')">1</button>
+      <button onclick="appendNumber('2')">2</button>
+      <button onclick="appendNumber('3')">3</button>
+      <button class="btn-op" onclick="chooseOperation('+')">+</button>
+
+      <button class="btn-zero" onclick="appendNumber('0')">0</button>
+      <button onclick="appendNumber('.')">.</button>
+      <button class="btn-op" onclick="compute()">=</button>
+    </div>
+  </div>
+
+  <script>
+    let currentOperand = '0';
+    let previousOperand = '';
+    let operation = undefined;
+    let shouldResetScreen = false;
+
+    const currentEl = document.getElementById('current');
+    const previousEl = document.getElementById('previous');
+
+    function updateDisplay() {
+      currentEl.textContent = currentOperand;
+      const opSymbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+      previousEl.textContent = operation ? `${previousOperand} ${opSymbols[operation]}` : '';
+    }
+
+    function clearAll() {
+      currentOperand = '0';
+      previousOperand = '';
+      operation = undefined;
+      shouldResetScreen = false;
+      updateDisplay();
+    }
+
+    function deleteLast() {
+      if (shouldResetScreen) return;
+      if (currentOperand.length === 1 || currentOperand === 'Error') {
+        currentOperand = '0';
+      } else {
+        currentOperand = currentOperand.slice(0, -1);
+      }
+      updateDisplay();
+    }
+
+    function appendPercent() {
+      const val = parseFloat(currentOperand);
+      if (isNaN(val)) return;
+      currentOperand = (val / 100).toString();
+      updateDisplay();
+    }
+
+    function appendNumber(number) {
+      if (currentOperand === 'Error' || shouldResetScreen) {
+        currentOperand = '';
+        shouldResetScreen = false;
+      }
+      if (number === '.' && currentOperand.includes('.')) return;
+      if (currentOperand === '0' && number !== '.') {
+        currentOperand = number;
+      } else {
+        currentOperand += number;
+      }
+      updateDisplay();
+    }
+
+    function chooseOperation(op) {
+      if (currentOperand === 'Error') return;
+      if (operation !== undefined && !shouldResetScreen) {
+        compute();
+      }
+      operation = op;
+      previousOperand = currentOperand;
+      shouldResetScreen = true;
+      updateDisplay();
+    }
+
+    function compute() {
+      const prev = parseFloat(previousOperand);
+      const curr = parseFloat(currentOperand);
+      if (isNaN(prev) || isNaN(curr)) return;
+      let result;
+      switch (operation) {
+        case '+': result = prev + curr; break;
+        case '-': result = prev - curr; break;
+        case '*': result = prev * curr; break;
+        case '/': result = curr === 0 ? 'Error' : prev / curr; break;
+        default: return;
+      }
+      currentOperand = result === 'Error' ? 'Error' : String(Math.round(result * 1e10) / 1e10);
+      operation = undefined;
+      previousOperand = '';
+      shouldResetScreen = true;
+      updateDisplay();
+    }
+  </script>
+</body>
+</html>
